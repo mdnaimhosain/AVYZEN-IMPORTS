@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { formatPrice } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
 import { CreditCard, Banknote, ShieldCheck, Tag, Loader2, MessageCircle } from "lucide-react";
-import { generateCustomerSupportUrl } from "@/services/whatsapp";
+import { generateOrderWhatsAppUrl, generateCartWhatsAppOrderUrl } from "@/services/whatsapp";
 
 export function CheckoutForm() {
   const router = useRouter();
@@ -130,7 +130,14 @@ export function CheckoutForm() {
       } else {
         // Direct confirmation for COD or instant confirmation
         showToast(`Order #${order.order_number} confirmed successfully!`, "success");
-        router.push(`/order-confirmation/${order.id}`);
+        // Immediately dispatch WhatsApp order message to the merchant
+        const waUrl = generateOrderWhatsAppUrl(order);
+        try {
+          window.open(waUrl, "_blank");
+        } catch {
+          // If popup is blocked by browser, order confirmation page will display direct 1-click button
+        }
+        router.push(`/order-confirmation/${order.id}?wa=auto`);
       }
     } catch (err) {
       console.error("Submission error:", err);
@@ -453,19 +460,35 @@ export function CheckoutForm() {
             <Button
               type="button"
               variant="whatsapp"
-              className="w-full text-xs gap-2"
+              className="w-full text-xs gap-2 py-5 font-bold shadow-md hover:shadow-lg transition-all"
               onClick={() => {
-                const summary = items
-                  .map((i) => `${i.product.name}${i.variant ? ` (${i.variant.name})` : ""} × ${i.quantity}`)
-                  .join(", ");
-                const waUrl = generateCustomerSupportUrl(
-                  `Hello Avyzen Imports, I would like to place this order via WhatsApp: ${summary}. Total: ${formatPrice(liveGrandTotal)}.`
-                );
+                const currentFullName = watch("fullName");
+                const currentPhone = watch("phone");
+                const currentAddress = watch("address");
+                const currentCity = watch("city");
+                const currentArea = watch("area");
+
+                const waUrl = generateCartWhatsAppOrderUrl({
+                  items: items.map((i) => ({
+                    name: i.product.name,
+                    variantName: i.variant?.name || null,
+                    quantity: i.quantity,
+                    unitPrice: i.unitPrice,
+                    totalPrice: i.unitPrice * i.quantity,
+                  })),
+                  subtotal,
+                  shippingFee: liveShippingFee,
+                  total: liveGrandTotal,
+                  customerName: currentFullName || undefined,
+                  customerPhone: currentPhone || undefined,
+                  customerAddress: currentAddress ? `${currentAddress}${currentArea ? `, ${currentArea}` : ""}` : undefined,
+                  customerCity: currentCity || undefined,
+                });
                 window.open(waUrl, "_blank");
               }}
             >
               <MessageCircle className="w-4 h-4 fill-current" />
-              <span>Or Place Order Directly on WhatsApp</span>
+              <span>Or Place Order Directly on WhatsApp (+8801939846312)</span>
             </Button>
           </div>
         </div>

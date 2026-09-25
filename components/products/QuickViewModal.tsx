@@ -12,7 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { formatPrice, calculateDiscountPercent } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
 import { useToast } from "@/context/toast-context";
-import { generateProductInquiryUrl } from "@/services/whatsapp";
+import { siteConfig } from "@/config/site";
+import { generateDirectProductOrderUrl } from "@/services/whatsapp";
 
 interface QuickViewModalProps {
   product: Product;
@@ -58,9 +59,15 @@ export function QuickViewModal({ product, open, onClose }: QuickViewModalProps) 
   const handleWhatsAppOrder = () => {
     const productUrl = typeof window !== "undefined"
       ? `${window.location.origin}/products/${product.slug}`
-      : `/products/${product.slug}`;
-    const variantNote = selectedVariant ? ` (Variant: ${selectedVariant.name})` : "";
-    const waUrl = generateProductInquiryUrl(`${product.name}${variantNote}`, productUrl);
+      : `${siteConfig.url}/products/${product.slug}`;
+    const waUrl = generateDirectProductOrderUrl({
+      productName: product.name,
+      variantName: selectedVariant?.name || null,
+      quantity,
+      unitPrice: currentPrice,
+      totalPrice: currentPrice * quantity,
+      productUrl,
+    });
     window.open(waUrl, "_blank");
   };
 

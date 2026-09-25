@@ -9,7 +9,8 @@ import { formatPrice, calculateDiscountPercent } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
 import { useToast } from "@/context/toast-context";
 import { Badge } from "@/components/ui/badge";
-import { generateProductInquiryUrl } from "@/services/whatsapp";
+import { siteConfig } from "@/config/site";
+import { generateDirectProductOrderUrl } from "@/services/whatsapp";
 import { QuickViewModal } from "./QuickViewModal";
 
 interface ProductCardProps {
@@ -47,8 +48,15 @@ export function ProductCard({ product }: ProductCardProps) {
     e.preventDefault();
     const productUrl = typeof window !== "undefined"
       ? `${window.location.origin}/products/${product.slug}`
-      : `/products/${product.slug}`;
-    const waUrl = generateProductInquiryUrl(product.name, productUrl);
+      : `${siteConfig.url}/products/${product.slug}`;
+    const waUrl = generateDirectProductOrderUrl({
+      productName: product.name,
+      variantName: null,
+      quantity: 1,
+      unitPrice: product.price,
+      totalPrice: product.price,
+      productUrl,
+    });
     window.open(waUrl, "_blank");
   };
 

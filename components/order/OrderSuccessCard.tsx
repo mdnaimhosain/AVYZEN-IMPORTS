@@ -37,6 +37,35 @@ export function OrderSuccessCard({ order }: OrderSuccessCardProps) {
         </p>
       </div>
 
+      {/* High-Priority WhatsApp Confirmation Action Box */}
+      <div className="bg-linear-to-r from-emerald-500/15 via-emerald-500/10 to-teal-500/15 border-2 border-emerald-500/40 rounded-3xl p-6 sm:p-7 shadow-xl shadow-emerald-500/5 text-center space-y-4 print:hidden">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs font-bold uppercase tracking-wider">
+          <MessageCircle className="w-4 h-4 fill-current" />
+          <span>অর্ডার ও প্রোডাক্ট কনফার্মেশন — হোয়াটসঅ্যাপ</span>
+        </div>
+        
+        <div className="space-y-1.5">
+          <h2 className="text-lg sm:text-xl font-black text-zinc-950 dark:text-white">
+            মার্চেন্টের হোয়াটসঅ্যাপে অর্ডারের প্রোডাক্ট ও ডেলিভারি বিস্তারিত পাঠান
+          </h2>
+          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 max-w-lg mx-auto leading-relaxed">
+            আপনার পছন্দের প্রোডাক্ট এবং ডেলিভারি এড্রেস দ্রুত কনফার্ম করার জন্য নিচের বাটনে ক্লিক করুন। সব তথ্য সহ স্বয়ংক্রিয়ভাবে মার্চেন্টের হোয়াটসঅ্যাপে (+8801939846312) ওপেন হবে।
+          </p>
+        </div>
+
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Button
+            size="lg"
+            variant="whatsapp"
+            onClick={() => window.open(whatsappUrl, "_blank")}
+            className="w-full sm:w-auto px-8 py-6 text-sm font-bold gap-2.5 rounded-2xl shadow-lg shadow-emerald-500/20 hover:scale-102 active:scale-98 transition-all"
+          >
+            <MessageCircle className="w-5 h-5 fill-current" />
+            <span>হোয়াটসঅ্যাপে পাঠান (+8801939846312)</span>
+          </Button>
+        </div>
+      </div>
+
       {/* Main Order Card */}
       <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden print:border-none print:shadow-none">
         {/* Header Bar */}

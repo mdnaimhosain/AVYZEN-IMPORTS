@@ -9,7 +9,8 @@ import { VariantSelector } from "./VariantSelector";
 import { useCart } from "@/context/cart-context";
 import { useToast } from "@/context/toast-context";
 import { formatPrice, calculateDiscountPercent } from "@/lib/utils";
-import { generateProductInquiryUrl } from "@/services/whatsapp";
+import { siteConfig } from "@/config/site";
+import { generateDirectProductOrderUrl } from "@/services/whatsapp";
 
 interface ProductActionsProps {
   product: Product;
@@ -48,9 +49,15 @@ export function ProductActions({ product }: ProductActionsProps) {
   const handleWhatsAppOrder = () => {
     const productUrl = typeof window !== "undefined"
       ? window.location.href
-      : `/products/${product.slug}`;
-    const variantTag = selectedVariant ? ` (${selectedVariant.name})` : "";
-    const waUrl = generateProductInquiryUrl(`${product.name}${variantTag}`, productUrl);
+      : `${siteConfig.url}/products/${product.slug}`;
+    const waUrl = generateDirectProductOrderUrl({
+      productName: product.name,
+      variantName: selectedVariant?.name || null,
+      quantity,
+      unitPrice: currentPrice,
+      totalPrice: currentPrice * quantity,
+      productUrl,
+    });
     window.open(waUrl, "_blank");
   };
 

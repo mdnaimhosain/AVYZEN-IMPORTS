@@ -8,7 +8,7 @@ import { useCart } from "@/context/cart-context";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
-import { generateCustomerSupportUrl } from "@/services/whatsapp";
+import { generateCartWhatsAppOrderUrl } from "@/services/whatsapp";
 
 export function CartDrawer() {
   const { isCartOpen, setIsCartOpen, items, updateQuantity, removeItem, subtotal, total, itemCount } = useCart();
@@ -189,11 +189,19 @@ export function CartDrawer() {
                   className="w-full gap-2"
                   size="md"
                   onClick={() => {
-                    const cartSummary = items
-                      .map((i) => `${i.product.name}${i.variant ? ` (${i.variant.name})` : ""} × ${i.quantity}`)
-                      .join(", ");
-                    const url = generateCustomerSupportUrl(`Hello Avyzen Imports, I would like to order my bag contents directly via WhatsApp: ${cartSummary}. Estimated total: ${formatPrice(total)}.`);
-                    window.open(url, "_blank");
+                    const waUrl = generateCartWhatsAppOrderUrl({
+                      items: items.map((i) => ({
+                        name: i.product.name,
+                        variantName: i.variant?.name || null,
+                        quantity: i.quantity,
+                        unitPrice: i.unitPrice,
+                        totalPrice: i.unitPrice * i.quantity,
+                      })),
+                      subtotal,
+                      shippingFee: subtotal >= freeShippingThreshold ? 0 : siteConfig.shipping.insideDhaka.rate,
+                      total,
+                    });
+                    window.open(waUrl, "_blank");
                   }}
                 >
                   <MessageCircle className="w-4 h-4 fill-current" />

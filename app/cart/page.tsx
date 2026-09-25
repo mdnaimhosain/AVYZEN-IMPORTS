@@ -8,7 +8,7 @@ import { formatPrice } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
 import { Button } from "@/components/ui/button";
 import { Trash2, Plus, Minus, ArrowRight, ShoppingBag, MessageCircle, ShieldCheck } from "lucide-react";
-import { generateCustomerSupportUrl } from "@/services/whatsapp";
+import { generateCartWhatsAppOrderUrl } from "@/services/whatsapp";
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, clearCart, subtotal, discount, shipping, total } = useCart();
@@ -172,19 +172,25 @@ export default function CartPage() {
 
               <Button
                 variant="whatsapp"
-                className="w-full text-xs gap-2"
+                className="w-full text-xs gap-2 py-5 font-bold shadow-md hover:shadow-lg transition-all"
                 onClick={() => {
-                  const summary = items
-                    .map((i) => `${i.product.name}${i.variant ? ` (${i.variant.name})` : ""} × ${i.quantity}`)
-                    .join(", ");
-                  const waUrl = generateCustomerSupportUrl(
-                    `Hello Avyzen Imports, I'd like to place an order via WhatsApp: ${summary}. Estimated total: ${formatPrice(total)}.`
-                  );
+                  const waUrl = generateCartWhatsAppOrderUrl({
+                    items: items.map((i) => ({
+                      name: i.product.name,
+                      variantName: i.variant?.name || null,
+                      quantity: i.quantity,
+                      unitPrice: i.unitPrice,
+                      totalPrice: i.unitPrice * i.quantity,
+                    })),
+                    subtotal,
+                    shippingFee: subtotal >= siteConfig.shipping.freeShippingThreshold ? 0 : siteConfig.shipping.insideDhaka.rate,
+                    total,
+                  });
                   window.open(waUrl, "_blank");
                 }}
               >
                 <MessageCircle className="w-4 h-4 fill-current" />
-                <span>Order via WhatsApp</span>
+                <span>Order Bag Contents via WhatsApp (+8801939846312)</span>
               </Button>
             </div>
 

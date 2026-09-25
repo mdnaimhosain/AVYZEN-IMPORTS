@@ -19,38 +19,128 @@ Please let me know if this item is currently in stock.`;
   return `https://wa.me/${siteConfig.business.whatsappNumber}?text=${encodeURIComponent(message)}`;
 }
 
-export function generateOrderWhatsAppUrl(order: Order): string {
-  const itemsText = order.items
-    ? order.items
-        .map(
-          (item) =>
-            `- ${item.product_name}${item.variant_name ? ` (${item.variant_name})` : ""} × ${item.quantity} = ${formatPrice(item.total_price)}`
-        )
-        .join("\n")
-    : "Items in order";
+/**
+ * Direct 1-Click WhatsApp Order for a specific product and variant
+ */
+export function generateDirectProductOrderUrl(params: {
+  productName: string;
+  variantName?: string | null;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  productUrl: string;
+  customerName?: string;
+  customerPhone?: string;
+  customerAddress?: string;
+}): string {
+  const variantDisplay = params.variantName ? params.variantName : "Standard Edition";
+  const message = `🛍️ *NEW PRODUCT ORDER — AVYZEN IMPORTS*
+Hello Avyzen Imports! I want to order this product:
 
-  const message = `*NEW ORDER CONFIRMATION*
-*Order ID:* ${order.order_number}
+📦 *ORDERED PRODUCT:*
+• Product: *${params.productName}*
+• Edition/Variant: ${variantDisplay}
+• Quantity: ${params.quantity}
+• Unit Price: ${formatPrice(params.unitPrice)}
+• *Total Payable:* *${formatPrice(params.totalPrice)}*
+• Product Link: ${params.productUrl}
 
-*Customer Details:*
-• Name: ${order.customer_name}
-• Phone: ${order.customer_phone}
-• Email: ${order.customer_email}
+👤 *CUSTOMER & DELIVERY INFORMATION:*
+• Name: ${params.customerName || ""}
+• Mobile Phone: ${params.customerPhone || ""}
+• Delivery Address: ${params.customerAddress || ""}
+• Payment Method: Cash on Delivery (ক্যাশ অন ডেলিভারি)
 
-*Order Items:*
+Please confirm my order and let me know the delivery timeline. Thank you!`;
+
+  return `https://wa.me/${siteConfig.business.whatsappNumber}?text=${encodeURIComponent(message)}`;
+}
+
+/**
+ * Cart WhatsApp Order for multiple items
+ */
+export function generateCartWhatsAppOrderUrl(params: {
+  items: Array<{
+    name: string;
+    variantName?: string | null;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+  }>;
+  subtotal: number;
+  shippingFee?: number;
+  total: number;
+  customerName?: string;
+  customerPhone?: string;
+  customerAddress?: string;
+  customerCity?: string;
+}): string {
+  const itemsText = params.items
+    .map(
+      (item, idx) =>
+        `${idx + 1}️⃣ *${item.name}*${item.variantName ? ` (Edition: ${item.variantName})` : ""}\n   • Qty: ${item.quantity} × ${formatPrice(item.unitPrice)} = *${formatPrice(item.totalPrice)}*`
+    )
+    .join("\n\n");
+
+  const message = `🛍️ *NEW CART ORDER — AVYZEN IMPORTS*
+Hello Avyzen Imports! I want to order the following items:
+
+📦 *ORDERED PRODUCTS:*
 ${itemsText}
 
-*Financial Summary:*
+💰 *PAYMENT BREAKDOWN:*
+• Subtotal: ${formatPrice(params.subtotal)}
+• Delivery Fee: ${params.shippingFee !== undefined && params.shippingFee === 0 ? "FREE" : params.shippingFee ? formatPrice(params.shippingFee) : "Standard"}
+• *Total Payable:* *${formatPrice(params.total)}*
+
+👤 *DELIVERY INFORMATION:*
+• Name: ${params.customerName || ""}
+• Mobile Phone: ${params.customerPhone || ""}
+• Full Address: ${params.customerAddress || ""}${params.customerCity ? `, ${params.customerCity}` : ""}
+• Payment Method: Cash on Delivery (ক্যাশ অন ডেলিভারি)
+
+Please confirm stock and arrange delivery to my address. Thank you!`;
+
+  return `https://wa.me/${siteConfig.business.whatsappNumber}?text=${encodeURIComponent(message)}`;
+}
+
+/**
+ * Confirmed Order WhatsApp URL (Generated after checkout submission)
+ */
+export function generateOrderWhatsAppUrl(order: Order): string {
+  const itemsText = order.items && order.items.length > 0
+    ? order.items
+        .map(
+          (item, idx) =>
+            `${idx + 1}️⃣ *${item.product_name}*${item.variant_name ? ` (Edition: ${item.variant_name})` : ""}\n   • Qty: ${item.quantity} × ${formatPrice(item.unit_price)} = *${formatPrice(item.total_price)}*`
+        )
+        .join("\n\n")
+    : "Items in order";
+
+  const message = `🛍️ *CONFIRMED ORDER NOTIFICATION — AVYZEN IMPORTS*
+━━━━━━━━━━━━━━━━━━━━━━━━
+📋 *Order ID:* #${order.order_number}
+📅 *Date:* ${new Date(order.created_at).toLocaleString("en-GB", { timeZone: "Asia/Dhaka", dateStyle: "medium", timeStyle: "short" })}
+
+📦 *ORDERED PRODUCTS:*
+${itemsText}
+
+💰 *FINANCIAL SUMMARY:*
 • Subtotal: ${formatPrice(order.subtotal)}
-• Shipping: ${formatPrice(order.shipping_fee)}
-• Discount: ${formatPrice(order.discount)}
-• *Total:* ${formatPrice(order.total)}
-• Payment Method: ${order.payment_method === "COD" ? "Cash on Delivery" : "Online Payment"}
+• Delivery Charge: ${order.shipping_fee === 0 ? "FREE (৳0)" : formatPrice(order.shipping_fee)}
+${order.discount > 0 ? `• Discount (${order.coupon_code || "Promo"}): -${formatPrice(order.discount)}\n` : ""}• *TOTAL PAYABLE:* *${formatPrice(order.total)}*
+• Payment Method: ${order.payment_method === "COD" ? "Cash on Delivery (ক্যাশ অন ডেলিভারি)" : "Online Payment Gateway"}
 • Payment Status: ${order.payment_status}
 
-*Delivery Address:*
-${order.address}, ${order.area}, ${order.city}${order.postal_code ? ` - ${order.postal_code}` : ""}
-${order.delivery_notes ? `*Delivery Notes:* ${order.delivery_notes}` : ""}`;
+👤 *CUSTOMER & DELIVERY ADDRESS:*
+• Name: ${order.customer_name}
+• Mobile Phone: ${order.customer_phone}
+• Email: ${order.customer_email}
+• Full Address: ${order.address}
+• Area / Thana: ${order.area}
+• City / District: ${order.city}${order.postal_code ? ` (Postal: ${order.postal_code})` : ""}
+${order.delivery_notes ? `• Delivery Notes: "${order.delivery_notes}"\n` : ""}━━━━━━━━━━━━━━━━━━━━━━━━
+Hello Avyzen Imports! I have placed this order on your website. Please confirm availability and prepare it for delivery. Thank you!`;
 
   return `https://wa.me/${siteConfig.business.whatsappNumber}?text=${encodeURIComponent(message)}`;
 }
@@ -82,9 +172,22 @@ export async function sendOrderWhatsAppNotification(order: Order): Promise<{
 
   const endpoint = `https://graph.facebook.com/${GRAPH_API_VERSION}/${phoneNumberId}/messages`;
 
+  const itemsList = order.items && order.items.length > 0
+    ? order.items
+        .map(
+          (item, idx) =>
+            `${idx + 1}. ${item.product_name}${item.variant_name ? ` (${item.variant_name})` : ""} × ${item.quantity} = ${formatPrice(item.total_price)}`
+        )
+        .join("\n")
+    : "No items";
+
   const orderMessage = `*NEW ORDER RECEIVED — AVYZEN IMPORTS*
-Order Number: ${order.order_number}
-Total Amount: ${formatPrice(order.total)} (${order.payment_status})
+Order Number: #${order.order_number}
+Total: ${formatPrice(order.total)} (${order.payment_method} - ${order.payment_status})
+
+Products:
+${itemsList}
+
 Customer: ${order.customer_name} (${order.customer_phone})
 Address: ${order.address}, ${order.city}`;
 
