@@ -11,7 +11,7 @@ interface ProductGalleryProps {
 
 export function ProductGallery({ images, productName }: ProductGalleryProps) {
   const [selectedImage, setSelectedImage] = useState(
-    images.length > 0 ? images[0].image_url : "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1000"
+    images.length > 0 ? images[0].image_url : "/images/products/apex-pro.jpg"
   );
 
   return (

@@ -123,7 +123,7 @@ export function OrderSuccessCard({ order }: OrderSuccessCardProps) {
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-zinc-100 dark:bg-zinc-800 shrink-0 overflow-hidden relative">
                       <img
-                        src={item.image_url || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=200"}
+                        src={item.image_url || "/images/products/apex-pro.jpg"}
                         alt=""
                         className="w-full h-full object-cover"
                       />

@@ -30,7 +30,7 @@ export function QuickViewModal({ product, open, onClose }: QuickViewModalProps) 
   );
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(
-    product.images?.[0]?.image_url || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=800"
+    product.images?.[0]?.image_url || "/images/products/apex-pro.jpg"
   );
 
   const currentPrice = selectedVariant ? selectedVariant.price : product.price;

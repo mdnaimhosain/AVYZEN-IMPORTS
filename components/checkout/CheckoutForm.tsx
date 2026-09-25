@@ -347,7 +347,7 @@ export function CheckoutForm() {
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 shrink-0 overflow-hidden relative">
                     <img
-                      src={item.product.images?.[0]?.image_url || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=200"}
+                      src={item.product.images?.[0]?.image_url || "/images/products/apex-pro.jpg"}
                       alt=""
                       className="w-full h-full object-cover"
                     />

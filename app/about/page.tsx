@@ -50,7 +50,7 @@ export default function AboutPage() {
 
           <div className="relative aspect-4/3 rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-xl">
             <img
-              src="https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=800&auto=format&fit=crop"
+              src="/images/categories/smart-gadgets.jpg"
               alt="Avyzen Workspace Setup"
               className="w-full h-full object-cover opacity-90"
             />

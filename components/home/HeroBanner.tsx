@@ -75,7 +75,7 @@ export function HeroBanner() {
           <div className="lg:col-span-5 relative">
             <div className="relative aspect-square max-w-md mx-auto rounded-3xl overflow-hidden border border-zinc-800 bg-zinc-900 shadow-2xl shadow-emerald-500/10 group">
               <Image
-                src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1000&auto=format&fit=crop"
+                src="/images/products/apex-pro.jpg"
                 alt="Avyzen Apex Pro Wireless Flagship Headphones"
                 fill
                 priority

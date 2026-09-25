@@ -62,7 +62,7 @@ export default function CartPage() {
                 <div className="flex items-center gap-4">
                   <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 border border-zinc-200 dark:border-zinc-800">
                     <Image
-                      src={item.product.images?.[0]?.image_url || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=300"}
+                      src={item.product.images?.[0]?.image_url || "/images/products/apex-pro.jpg"}
                       alt={item.product.name}
                       fill
                       className="object-cover"
