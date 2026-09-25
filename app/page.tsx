@@ -1,69 +1,209 @@
-import Image from "next/image";
+import React from "react";
+import Link from "next/link";
+import { getCategories, getProducts } from "@/lib/db/store";
+import { HeroBanner } from "@/components/home/HeroBanner";
+import { CategoryShowcase } from "@/components/home/CategoryShowcase";
+import { WhyChooseUs } from "@/components/home/WhyChooseUs";
+import { WhatsAppCtaBanner } from "@/components/home/WhatsAppCtaBanner";
+import { FaqSection } from "@/components/home/FaqSection";
+import { ProductCard } from "@/components/products/ProductCard";
+import { ArrowRight, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-export default function Home() {
+export const revalidate = 60; // Revalidate every minute
+
+export default async function HomePage() {
+  const [categories, featuredProducts, bestSellers, newArrivals] = await Promise.all([
+    getCategories(),
+    getProducts({ featured: true }),
+    getProducts({ bestSeller: true }),
+    getProducts({ newArrival: true }),
+  ]);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="flex flex-col min-h-screen">
+      {/* 1. Hero Section */}
+      <HeroBanner />
+
+      {/* 2. Categories Showcase */}
+      <CategoryShowcase categories={categories} />
+
+      {/* 3. Featured Products */}
+      <section className="py-16 sm:py-20 bg-zinc-50 dark:bg-zinc-900/40 border-t border-zinc-200/80 dark:border-zinc-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                Flagship Lineup
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-zinc-50 mt-1">
+                Featured Gear
+              </h2>
+            </div>
+            <Link
+              href="/shop"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-900 dark:text-zinc-100 hover:text-emerald-600 transition-colors"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              <span>Explore All</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {featuredProducts.slice(0, 4).map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Why Choose Us */}
+      <WhyChooseUs />
+
+      {/* 5. Best Sellers Section */}
+      <section className="py-16 sm:py-20 bg-white dark:bg-zinc-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-500">
+                Customer Favorites
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-zinc-50 mt-1">
+                Best Sellers
+              </h2>
+            </div>
+            <Link
+              href="/shop"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-900 dark:text-zinc-100 hover:text-emerald-600 transition-colors"
             >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              <span>View All Best Sellers</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {bestSellers.slice(0, 4).map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* 6. Promotional Mid-Banner */}
+      <section className="py-12 bg-zinc-900 text-white border-y border-zinc-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-1 text-center md:text-left">
+            <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+              Special Welcome Promotion
+            </span>
+            <h3 className="text-xl sm:text-2xl font-black">
+              Get ৳200 OFF Your First Order Above ৳1,500
+            </h3>
+            <p className="text-xs text-zinc-400">
+              Use promo coupon code <strong className="text-white font-mono bg-zinc-800 px-2 py-0.5 rounded border border-zinc-700">WELCOME200</strong> during checkout.
+            </p>
+          </div>
+          <Button asChild size="lg" className="bg-white text-zinc-950 hover:bg-zinc-100 font-bold shrink-0">
+            <Link href="/shop">Shop Now</Link>
+          </Button>
         </div>
-      </main>
+      </section>
+
+      {/* 7. New Arrivals */}
+      <section className="py-16 sm:py-20 bg-zinc-50 dark:bg-zinc-900/40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                Fresh Drops
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-zinc-50 mt-1">
+                New Arrivals
+              </h2>
+            </div>
+            <Link
+              href="/shop?sort=newest"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-900 dark:text-zinc-100 hover:text-emerald-600 transition-colors"
+            >
+              <span>Explore New Releases</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {newArrivals.slice(0, 4).map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 8. Verified Customer Reviews */}
+      <section className="py-16 sm:py-20 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-xl mx-auto mb-12">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+              Community Feedback
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-zinc-50 mt-1">
+              Verified Customer Experiences
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-6 rounded-3xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-4">
+              <div className="flex text-amber-500">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-current" />
+                ))}
+              </div>
+              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed italic">
+                &quot;Exceptional sound separation and active noise cancellation. Received original package in Dhaka in under 24 hours. Avyzen is genuine!&quot;
+              </p>
+              <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">Tanvir Ahmed</p>
+                <p className="text-[11px] text-zinc-400">Verified Buyer • Dhaka</p>
+              </div>
+            </div>
+
+            <div className="p-6 rounded-3xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-4">
+              <div className="flex text-amber-500">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-current" />
+                ))}
+              </div>
+              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed italic">
+                &quot;Gasket mount typing experience on the K75 is creamy and deep. RGB lighting looks premium on dark desk setups. Highly recommended.&quot;
+              </p>
+              <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">Mahmudul Karim</p>
+                <p className="text-[11px] text-zinc-400">Software Engineer • Banani</p>
+              </div>
+            </div>
+
+            <div className="p-6 rounded-3xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-4">
+              <div className="flex text-amber-500">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-current" />
+                ))}
+              </div>
+              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed italic">
+                &quot;Ordered via WhatsApp and got prompt confirmation from their team. Parcel arrived with proper bubble wrap and unbroken factory seals.&quot;
+              </p>
+              <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">Sajid Hasan</p>
+                <p className="text-[11px] text-zinc-400">Verified Buyer • Chittagong</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 9. WhatsApp Banner */}
+      <WhatsAppCtaBanner />
+
+      {/* 10. FAQ */}
+      <FaqSection />
     </div>
   );
 }
