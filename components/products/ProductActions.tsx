@@ -11,6 +11,7 @@ import { useToast } from "@/context/toast-context";
 import { formatPrice, calculateDiscountPercent } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
 import { generateDirectProductOrderUrl } from "@/services/whatsapp";
+import { QuickAddressModal, QuickOrderInfo } from "@/components/order/QuickAddressModal";
 
 interface ProductActionsProps {
   product: Product;
@@ -25,6 +26,7 @@ export function ProductActions({ product }: ProductActionsProps) {
     product.variants && product.variants.length > 0 ? product.variants[0] : null
   );
   const [quantity, setQuantity] = useState(1);
+  const [addressModalOpen, setAddressModalOpen] = useState(false);
 
   const currentPrice = selectedVariant ? selectedVariant.price : product.price;
   const currentStock = selectedVariant ? selectedVariant.stock : product.stock;
@@ -46,7 +48,7 @@ export function ProductActions({ product }: ProductActionsProps) {
     router.push("/checkout");
   };
 
-  const handleWhatsAppOrder = () => {
+  const handleWhatsAppConfirm = (info: QuickOrderInfo) => {
     const productUrl = typeof window !== "undefined"
       ? window.location.href
       : `${siteConfig.url}/products/${product.slug}`;
@@ -57,6 +59,10 @@ export function ProductActions({ product }: ProductActionsProps) {
       unitPrice: currentPrice,
       totalPrice: currentPrice * quantity,
       productUrl,
+      customerName: info.customerName,
+      customerPhone: info.customerPhone,
+      customerAddress: info.customerAddress,
+      customerCity: info.customerCity,
     });
     window.open(waUrl, "_blank");
   };
@@ -155,13 +161,23 @@ export function ProductActions({ product }: ProductActionsProps) {
           type="button"
           size="lg"
           variant="whatsapp"
-          onClick={handleWhatsAppOrder}
+          onClick={() => setAddressModalOpen(true)}
           className="w-full text-sm gap-2"
         >
           <MessageCircle className="w-5 h-5 fill-current" />
           <span>Order via WhatsApp (+8801939846312)</span>
         </Button>
       </div>
+
+      {/* Mandatory Delivery Address Modal before WhatsApp Order */}
+      <QuickAddressModal
+        open={addressModalOpen}
+        onClose={() => setAddressModalOpen(false)}
+        itemsSummary={`${product.name}${selectedVariant ? ` (${selectedVariant.name})` : ""} × ${quantity}`}
+        subtotal={currentPrice * quantity}
+        freeShippingEligible={currentPrice * quantity >= siteConfig.shipping.freeShippingThreshold}
+        onConfirm={handleWhatsAppConfirm}
+      />
 
       {/* Trust & Guarantee Badges */}
       <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-zinc-500">

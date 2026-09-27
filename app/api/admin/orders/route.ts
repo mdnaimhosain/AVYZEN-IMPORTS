@@ -1,9 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { getAllOrders, updateOrderStatus } from "@/lib/db/store";
 import { OrderStatus, PaymentStatus } from "@/types/database";
+import { ADMIN_COOKIE_NAME, verifyAdminSessionToken } from "@/lib/auth/admin";
+
+async function isAuthorized() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
+  return verifyAdminSessionToken(token);
+}
 
 export async function GET(req: NextRequest) {
   try {
+    if (!(await isAuthorized())) {
+      return NextResponse.json({ success: false, error: "Unauthorized access" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status") || "ALL";
     const search = searchParams.get("search") || "";
@@ -18,6 +30,10 @@ export async function GET(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
+    if (!(await isAuthorized())) {
+      return NextResponse.json({ success: false, error: "Unauthorized access" }, { status: 401 });
+    }
+
     const body = await req.json();
     const { orderId, orderStatus, paymentStatus } = body;
 

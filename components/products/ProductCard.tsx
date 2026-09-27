@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { siteConfig } from "@/config/site";
 import { generateDirectProductOrderUrl } from "@/services/whatsapp";
 import { QuickViewModal } from "./QuickViewModal";
+import { QuickAddressModal, QuickOrderInfo } from "@/components/order/QuickAddressModal";
 
 interface ProductCardProps {
   product: Product;
@@ -21,6 +22,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
   const { showToast } = useToast();
   const [quickViewOpen, setQuickViewOpen] = useState(false);
+  const [addressModalOpen, setAddressModalOpen] = useState(false);
 
   const discountPercent = product.compare_at_price
     ? calculateDiscountPercent(product.compare_at_price, product.price)
@@ -44,8 +46,7 @@ export function ProductCard({ product }: ProductCardProps) {
     showToast(`Added "${product.name}" to bag!`, "success");
   };
 
-  const handleWhatsAppOrder = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleWhatsAppConfirm = (info: QuickOrderInfo) => {
     const productUrl = typeof window !== "undefined"
       ? `${window.location.origin}/products/${product.slug}`
       : `${siteConfig.url}/products/${product.slug}`;
@@ -56,6 +57,10 @@ export function ProductCard({ product }: ProductCardProps) {
       unitPrice: product.price,
       totalPrice: product.price,
       productUrl,
+      customerName: info.customerName,
+      customerPhone: info.customerPhone,
+      customerAddress: info.customerAddress,
+      customerCity: info.customerCity,
     });
     window.open(waUrl, "_blank");
   };
@@ -115,7 +120,10 @@ export function ProductCard({ product }: ProductCardProps) {
               <span>Quick View</span>
             </button>
             <button
-              onClick={handleWhatsAppOrder}
+              onClick={(e) => {
+                e.preventDefault();
+                setAddressModalOpen(true);
+              }}
               className="h-9 w-9 rounded-xl bg-[#25D366] text-white flex items-center justify-center shadow-md hover:bg-[#20ba5a] transition-colors"
               title="Order on WhatsApp"
               aria-label="Order on WhatsApp"
@@ -186,6 +194,16 @@ export function ProductCard({ product }: ProductCardProps) {
         product={product}
         open={quickViewOpen}
         onClose={() => setQuickViewOpen(false)}
+      />
+
+      {/* Mandatory Delivery Address Modal before WhatsApp Order */}
+      <QuickAddressModal
+        open={addressModalOpen}
+        onClose={() => setAddressModalOpen(false)}
+        itemsSummary={`${product.name} × 1`}
+        subtotal={product.price}
+        freeShippingEligible={product.price >= siteConfig.shipping.freeShippingThreshold}
+        onConfirm={handleWhatsAppConfirm}
       />
     </>
   );

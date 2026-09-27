@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/context/cart-context";
@@ -9,9 +9,11 @@ import { siteConfig } from "@/config/site";
 import { Button } from "@/components/ui/button";
 import { Trash2, Plus, Minus, ArrowRight, ShoppingBag, MessageCircle, ShieldCheck } from "lucide-react";
 import { generateCartWhatsAppOrderUrl } from "@/services/whatsapp";
+import { QuickAddressModal, QuickOrderInfo } from "@/components/order/QuickAddressModal";
 
 export default function CartPage() {
-  const { items, updateQuantity, removeItem, clearCart, subtotal, discount, shipping, total } = useCart();
+  const { items, updateQuantity, removeItem, clearCart, subtotal, discount, total } = useCart();
+  const [addressModalOpen, setAddressModalOpen] = useState(false);
 
   if (items.length === 0) {
     return (
@@ -173,21 +175,7 @@ export default function CartPage() {
               <Button
                 variant="whatsapp"
                 className="w-full text-xs gap-2 py-5 font-bold shadow-md hover:shadow-lg transition-all"
-                onClick={() => {
-                  const waUrl = generateCartWhatsAppOrderUrl({
-                    items: items.map((i) => ({
-                      name: i.product.name,
-                      variantName: i.variant?.name || null,
-                      quantity: i.quantity,
-                      unitPrice: i.unitPrice,
-                      totalPrice: i.unitPrice * i.quantity,
-                    })),
-                    subtotal,
-                    shippingFee: subtotal >= siteConfig.shipping.freeShippingThreshold ? 0 : siteConfig.shipping.insideDhaka.rate,
-                    total,
-                  });
-                  window.open(waUrl, "_blank");
-                }}
+                onClick={() => setAddressModalOpen(true)}
               >
                 <MessageCircle className="w-4 h-4 fill-current" />
                 <span>Order Bag Contents via WhatsApp (+8801939846312)</span>
@@ -201,6 +189,34 @@ export default function CartPage() {
           </div>
         </div>
       </div>
+
+      {/* Mandatory Delivery Address Modal before WhatsApp Order */}
+      <QuickAddressModal
+        open={addressModalOpen}
+        onClose={() => setAddressModalOpen(false)}
+        itemsSummary={items.map((i) => `${i.product.name} (x${i.quantity})`).join(", ")}
+        subtotal={subtotal}
+        freeShippingEligible={subtotal >= siteConfig.shipping.freeShippingThreshold}
+        onConfirm={(info: QuickOrderInfo) => {
+          const waUrl = generateCartWhatsAppOrderUrl({
+            items: items.map((i) => ({
+              name: i.product.name,
+              variantName: i.variant?.name || null,
+              quantity: i.quantity,
+              unitPrice: i.unitPrice,
+              totalPrice: i.unitPrice * i.quantity,
+            })),
+            subtotal,
+            shippingFee: info.shippingFee,
+            total: subtotal + info.shippingFee,
+            customerName: info.customerName,
+            customerPhone: info.customerPhone,
+            customerAddress: info.customerAddress,
+            customerCity: info.customerCity,
+          });
+          window.open(waUrl, "_blank");
+        }}
+      />
     </div>
   );
 }

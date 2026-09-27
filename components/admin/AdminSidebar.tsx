@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -11,11 +12,21 @@ import {
   Tag,
   Store,
   ShieldCheck,
+  LogOut,
 } from "lucide-react";
 import { siteConfig } from "@/config/site";
 
 export function AdminSidebar() {
   const pathname = usePathname();
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/auth/logout", { method: "POST" });
+      window.location.href = "/admin";
+    } catch {
+      window.location.reload();
+    }
+  };
 
   const links = [
     { title: "Dashboard Overview", href: "/admin", icon: LayoutDashboard },
@@ -30,8 +41,13 @@ export function AdminSidebar() {
       {/* Brand Header */}
       <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
         <Link href="/admin" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-white text-zinc-950 flex items-center justify-center font-black text-sm">
-            A
+          <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 border border-zinc-700 bg-white">
+            <Image
+              src="/images/logo.png"
+              alt="Avyzen Imports Logo"
+              fill
+              className="object-contain"
+            />
           </div>
           <div>
             <span className="font-extrabold text-sm text-white tracking-tight block">
@@ -81,6 +97,13 @@ export function AdminSidebar() {
           <Store className="w-3.5 h-3.5" />
           <span>View Live Storefront</span>
         </Link>
+        <button
+          onClick={handleLogout}
+          className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold border border-rose-500/20 transition-colors"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span>Owner Logout</span>
+        </button>
       </div>
     </aside>
   );

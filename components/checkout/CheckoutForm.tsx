@@ -16,7 +16,7 @@ import { generateOrderWhatsAppUrl, generateCartWhatsAppOrderUrl } from "@/servic
 
 export function CheckoutForm() {
   const router = useRouter();
-  const { items, subtotal, discount, shipping, total, clearCart, applyCoupon, removeCoupon, couponCode } = useCart();
+  const { items, subtotal, discount, clearCart, applyCoupon, removeCoupon, couponCode } = useCart();
   const { showToast } = useToast();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -27,6 +27,8 @@ export function CheckoutForm() {
     register,
     handleSubmit,
     watch,
+    trigger,
+    getValues,
     formState: { errors },
   } = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutFormSchema),
@@ -456,17 +458,47 @@ export function CheckoutForm() {
           </div>
 
           {/* WhatsApp Direct Order Alternative */}
-          <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800">
+          <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
             <Button
               type="button"
               variant="whatsapp"
               className="w-full text-xs gap-2 py-5 font-bold shadow-md hover:shadow-lg transition-all"
-              onClick={() => {
-                const currentFullName = watch("fullName");
-                const currentPhone = watch("phone");
-                const currentAddress = watch("address");
-                const currentCity = watch("city");
-                const currentArea = watch("area");
+              onClick={async () => {
+                const isValid = await trigger(["fullName", "phone", "address", "city", "area"]);
+                if (!isValid) {
+                  showToast("হোয়াটসঅ্যাপে অর্ডার পাঠাতে অনুগ্রহ করে নাম, মোবাইল নম্বর এবং সম্পূর্ণ ডেলিভারি ঠিকানা পূরণ করুন।", "error");
+                  const formValues = getValues();
+                  if (!formValues.fullName?.trim()) {
+                    const el = document.querySelector('input[name="fullName"]');
+                    (el as HTMLElement)?.focus?.();
+                  } else if (!formValues.phone?.trim()) {
+                    const el = document.querySelector('input[name="phone"]');
+                    (el as HTMLElement)?.focus?.();
+                  } else if (!formValues.address?.trim()) {
+                    const el = document.querySelector('input[name="address"]');
+                    (el as HTMLElement)?.focus?.();
+                  }
+                  return;
+                }
+
+                const values = getValues();
+                const cleanAddress = values.address?.trim();
+                const cleanPhone = values.phone?.trim();
+                const cleanName = values.fullName?.trim();
+                const cleanCity = values.city?.trim() || "Dhaka";
+                const cleanArea = values.area?.trim();
+
+                if (!cleanAddress || cleanAddress.length < 5) {
+                  showToast("অনুগ্রহ করে আপনার সম্পূর্ণ ডেলিভারি ঠিকানা দিন (কমপক্ষে ৫ অক্ষর)।", "error");
+                  return;
+                }
+
+                if (!cleanPhone || !cleanName) {
+                  showToast("অনুগ্রহ করে আপনার নাম ও সচল মোবাইল নম্বর প্রদান করুন।", "error");
+                  return;
+                }
+
+                const fullDeliveryAddress = `${cleanAddress}${cleanArea ? `, ${cleanArea}` : ""}`;
 
                 const waUrl = generateCartWhatsAppOrderUrl({
                   items: items.map((i) => ({
@@ -479,10 +511,10 @@ export function CheckoutForm() {
                   subtotal,
                   shippingFee: liveShippingFee,
                   total: liveGrandTotal,
-                  customerName: currentFullName || undefined,
-                  customerPhone: currentPhone || undefined,
-                  customerAddress: currentAddress ? `${currentAddress}${currentArea ? `, ${currentArea}` : ""}` : undefined,
-                  customerCity: currentCity || undefined,
+                  customerName: cleanName,
+                  customerPhone: cleanPhone,
+                  customerAddress: fullDeliveryAddress,
+                  customerCity: cleanCity,
                 });
                 window.open(waUrl, "_blank");
               }}
@@ -490,6 +522,9 @@ export function CheckoutForm() {
               <MessageCircle className="w-4 h-4 fill-current" />
               <span>Or Place Order Directly on WhatsApp (+8801939846312)</span>
             </Button>
+            <p className="text-[10px] text-center text-zinc-400">
+              * নাম, মোবাইল ও ডেলিভারি ঠিকানা ছাড়া হোয়াটসঅ্যাপে অর্ডার পাঠানো সম্ভব নয়
+            </p>
           </div>
         </div>
       </div>

@@ -184,6 +184,15 @@ export default function AdminProductsPage() {
 
                     <td className="py-4 px-6 text-right">
                       <div className="inline-flex items-center gap-2">
+                        <a
+                          href={`/products/${p.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                          title="View Product Page"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
                         <button
                           onClick={() => {
                             setEditingProduct(p);

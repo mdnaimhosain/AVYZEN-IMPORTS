@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { MessageCircle, Mail, MapPin, Phone, ShieldCheck, Clock } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { generateCustomerSupportUrl } from "@/services/whatsapp";
@@ -67,11 +68,16 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Brand Col */}
           <div className="lg:col-span-2 space-y-4">
-            <Link href="/" className="inline-flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-white text-zinc-950 flex items-center justify-center font-black text-base">
-                A
+            <Link href="/" className="inline-flex items-center gap-3 group">
+              <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border border-zinc-700 bg-white">
+                <Image
+                  src="/images/logo.png"
+                  alt="Avyzen Imports Logo"
+                  fill
+                  className="object-contain"
+                />
               </div>
-              <span className="font-black text-xl tracking-tight text-white">
+              <span className="font-black text-xl tracking-tight text-white group-hover:text-zinc-200 transition-colors">
                 {siteConfig.name}
               </span>
             </Link>

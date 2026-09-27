@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, MessageCircle } from "lucide-react";
@@ -9,15 +9,42 @@ import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
 import { generateCartWhatsAppOrderUrl } from "@/services/whatsapp";
+import { QuickAddressModal, QuickOrderInfo } from "@/components/order/QuickAddressModal";
 
 export function CartDrawer() {
   const { isCartOpen, setIsCartOpen, items, updateQuantity, removeItem, subtotal, total, itemCount } = useCart();
+  const [addressModalOpen, setAddressModalOpen] = useState(false);
 
   if (!isCartOpen) return null;
 
   const freeShippingThreshold = siteConfig.shipping.freeShippingThreshold;
   const freeShippingGap = Math.max(0, freeShippingThreshold - subtotal);
   const progressPercent = Math.min(100, (subtotal / freeShippingThreshold) * 100);
+
+  const handleWhatsAppConfirm = (info: QuickOrderInfo) => {
+    const waUrl = generateCartWhatsAppOrderUrl({
+      items: items.map((i) => ({
+        name: i.product.name,
+        variantName: i.variant?.name || null,
+        quantity: i.quantity,
+        unitPrice: i.unitPrice,
+        totalPrice: i.unitPrice * i.quantity,
+      })),
+      subtotal,
+      shippingFee: info.shippingFee,
+      total: subtotal + info.shippingFee,
+      customerName: info.customerName,
+      customerPhone: info.customerPhone,
+      customerAddress: info.customerAddress,
+      customerCity: info.customerCity,
+    });
+    window.open(waUrl, "_blank");
+    setIsCartOpen(false);
+  };
+
+  const itemsSummary = items
+    .map((i) => `${i.product.name} (x${i.quantity})`)
+    .join(", ");
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden animate-in fade-in duration-200">
@@ -188,21 +215,7 @@ export function CartDrawer() {
                   variant="whatsapp"
                   className="w-full gap-2"
                   size="md"
-                  onClick={() => {
-                    const waUrl = generateCartWhatsAppOrderUrl({
-                      items: items.map((i) => ({
-                        name: i.product.name,
-                        variantName: i.variant?.name || null,
-                        quantity: i.quantity,
-                        unitPrice: i.unitPrice,
-                        totalPrice: i.unitPrice * i.quantity,
-                      })),
-                      subtotal,
-                      shippingFee: subtotal >= freeShippingThreshold ? 0 : siteConfig.shipping.insideDhaka.rate,
-                      total,
-                    });
-                    window.open(waUrl, "_blank");
-                  }}
+                  onClick={() => setAddressModalOpen(true)}
                 >
                   <MessageCircle className="w-4 h-4 fill-current" />
                   <span>Quick Order via WhatsApp</span>
@@ -212,6 +225,16 @@ export function CartDrawer() {
           )}
         </div>
       </div>
+
+      {/* Mandatory Delivery Address Modal before WhatsApp Order */}
+      <QuickAddressModal
+        open={addressModalOpen}
+        onClose={() => setAddressModalOpen(false)}
+        itemsSummary={itemsSummary}
+        subtotal={subtotal}
+        freeShippingEligible={subtotal >= freeShippingThreshold}
+        onConfirm={handleWhatsAppConfirm}
+      />
     </div>
   );
 }

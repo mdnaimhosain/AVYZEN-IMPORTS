@@ -29,11 +29,23 @@ export function generateDirectProductOrderUrl(params: {
   unitPrice: number;
   totalPrice: number;
   productUrl: string;
-  customerName?: string;
-  customerPhone?: string;
-  customerAddress?: string;
+  customerName: string;
+  customerPhone: string;
+  customerAddress: string;
+  customerCity?: string;
 }): string {
+  const cleanAddress = params.customerAddress?.trim();
+  if (!cleanAddress || cleanAddress.length < 5) {
+    throw new Error("Valid delivery address is strictly required to place an order.");
+  }
+  const cleanName = params.customerName?.trim();
+  const cleanPhone = params.customerPhone?.trim();
+  if (!cleanName || !cleanPhone) {
+    throw new Error("Customer name and phone number are required to place an order.");
+  }
+
   const variantDisplay = params.variantName ? params.variantName : "Standard Edition";
+  const cityDisplay = params.customerCity ? `, ${params.customerCity}` : "";
   const message = `🛍️ *NEW PRODUCT ORDER — AVYZEN IMPORTS*
 Hello Avyzen Imports! I want to order this product:
 
@@ -46,9 +58,9 @@ Hello Avyzen Imports! I want to order this product:
 • Product Link: ${params.productUrl}
 
 👤 *CUSTOMER & DELIVERY INFORMATION:*
-• Name: ${params.customerName || ""}
-• Mobile Phone: ${params.customerPhone || ""}
-• Delivery Address: ${params.customerAddress || ""}
+• Name: ${cleanName}
+• Mobile Phone: ${cleanPhone}
+• Delivery Address: ${cleanAddress}${cityDisplay}
 • Payment Method: Cash on Delivery (ক্যাশ অন ডেলিভারি)
 
 Please confirm my order and let me know the delivery timeline. Thank you!`;
@@ -70,17 +82,29 @@ export function generateCartWhatsAppOrderUrl(params: {
   subtotal: number;
   shippingFee?: number;
   total: number;
-  customerName?: string;
-  customerPhone?: string;
-  customerAddress?: string;
+  customerName: string;
+  customerPhone: string;
+  customerAddress: string;
   customerCity?: string;
 }): string {
+  const cleanAddress = params.customerAddress?.trim();
+  if (!cleanAddress || cleanAddress.length < 5) {
+    throw new Error("Valid delivery address is strictly required to place an order.");
+  }
+  const cleanName = params.customerName?.trim();
+  const cleanPhone = params.customerPhone?.trim();
+  if (!cleanName || !cleanPhone) {
+    throw new Error("Customer name and phone number are required to place an order.");
+  }
+
   const itemsText = params.items
     .map(
       (item, idx) =>
         `${idx + 1}️⃣ *${item.name}*${item.variantName ? ` (Edition: ${item.variantName})` : ""}\n   • Qty: ${item.quantity} × ${formatPrice(item.unitPrice)} = *${formatPrice(item.totalPrice)}*`
     )
     .join("\n\n");
+
+  const cityDisplay = params.customerCity ? `, ${params.customerCity}` : "";
 
   const message = `🛍️ *NEW CART ORDER — AVYZEN IMPORTS*
 Hello Avyzen Imports! I want to order the following items:
@@ -94,9 +118,9 @@ ${itemsText}
 • *Total Payable:* *${formatPrice(params.total)}*
 
 👤 *DELIVERY INFORMATION:*
-• Name: ${params.customerName || ""}
-• Mobile Phone: ${params.customerPhone || ""}
-• Full Address: ${params.customerAddress || ""}${params.customerCity ? `, ${params.customerCity}` : ""}
+• Name: ${cleanName}
+• Mobile Phone: ${cleanPhone}
+• Full Address: ${cleanAddress}${cityDisplay}
 • Payment Method: Cash on Delivery (ক্যাশ অন ডেলিভারি)
 
 Please confirm stock and arrange delivery to my address. Thank you!`;
@@ -239,3 +263,113 @@ Address: ${order.address}, ${order.city}`;
     sentToAdmin: sentSuccessfully,
   };
 }
+
+/**
+ * Clean & format any phone number to a valid WhatsApp international format (e.g. 8801XXXXXXXXX)
+ */
+export function formatWhatsAppPhoneNumber(phone: string): string {
+  let clean = phone.replace(/\D/g, "");
+  if (clean.startsWith("0")) {
+    clean = "88" + clean;
+  } else if (!clean.startsWith("88") && clean.length === 10) {
+    clean = "880" + clean;
+  }
+  return clean;
+}
+
+export type AdminWhatsAppTemplate =
+  | "CONFIRMED"
+  | "SHIPPED"
+  | "DELIVERED"
+  | "PAYMENT_RECEIVED"
+  | "CANCELLED"
+  | "GENERAL";
+
+/**
+ * Generate predefined localized WhatsApp notification messages for admin to send to customers
+ */
+export function getAdminWhatsAppTemplateMessage(order: Order, template: AdminWhatsAppTemplate): string {
+  const itemsSummary = order.items && order.items.length > 0
+    ? order.items
+        .map(
+          (item, idx) =>
+            `${idx + 1}. ${item.product_name}${item.variant_name ? ` (${item.variant_name})` : ""} × ${item.quantity} = ${formatPrice(item.total_price)}`
+        )
+        .join("\n")
+    : "অর্ডারের আইটেমসমূহ";
+
+  switch (template) {
+    case "CONFIRMED":
+      return `🛍️ *অর্ডার কনফার্মেশন — AVYZEN IMPORTS*
+আসসালামু আলাইকুম ${order.customer_name},
+Avyzen Imports থেকে আপনার অর্ডার #${order.order_number} সফলভাবে কনফার্ম করা হয়েছে।
+
+📦 *পণ্য তালিকা:*
+${itemsSummary}
+
+💰 *মোট প্রদেয়:* ${formatPrice(order.total)} (${order.payment_method === "COD" ? "ক্যাশ অন ডেলিভারি" : "অনলাইন পেমেন্ট"})
+📍 *ডেলিভারি ঠিকানা:* ${order.address}, ${order.area}, ${order.city}
+
+পণ্যটি দ্রুত প্যাকেজিং সম্পন্ন করে কুরিয়ারে হস্তান্তর করা হবে।
+ধন্যবাদ, Avyzen Imports
+📞 হেল্পলাইন: +8801939846312`;
+
+    case "SHIPPED":
+      return `🚚 *অর্ডার শিপমেন্ট আপডেট — AVYZEN IMPORTS*
+আসসালামু আলাইকুম ${order.customer_name},
+আপনার অর্ডার #${order.order_number} ডেলিভারির উদ্দেশ্যে পাঠানো হয়েছে!
+
+📦 *অর্ডার:* #${order.order_number}
+📍 *ডেলিভারি ঠিকানা:* ${order.address}, ${order.area}, ${order.city}
+💰 *পরিশোধযোগ্য টাকা:* ${order.payment_method === "COD" && order.payment_status !== "PAID" ? formatPrice(order.total) : "পরিশোধিত (PAID)"}
+
+অনুগ্রহ করে ডেলিভারি রাইডারের ফোন রিসিভ করার জন্য প্রস্তুত থাকুন।
+ধন্যবাদ, Avyzen Imports!
+📞 হেল্পলাইন: +8801939846312`;
+
+    case "DELIVERED":
+      return `✅ *ডেলিভারি সম্পন্ন — AVYZEN IMPORTS*
+আসসালামু আলাইকুম ${order.customer_name},
+আপনার অর্ডার #${order.order_number} সফলভাবে ডেলিভারি সম্পন্ন হয়েছে।
+
+Avyzen Imports-এর সাথে কেনাকাটা করার জন্য আন্তরিক ধন্যবাদ! পণ্যটি কেমন লেগেছে অনুগ্রহ করে আমাদের জানাবেন।
+যেকোনো সহায়তায় আমাদের জানান।
+🌐 avyzenimports.com
+📞 হেল্পলাইন: +8801939846312`;
+
+    case "PAYMENT_RECEIVED":
+      return `💳 *পেমেন্ট প্রাপ্তি নিশ্চিতকরণ — AVYZEN IMPORTS*
+আসসালামু আলাইকুম ${order.customer_name},
+আপনার অর্ডার #${order.order_number}-এর জন্য ${formatPrice(order.total)} পেমেন্ট সফলভাবে গৃহীত হয়েছে।
+
+পেমেন্ট স্ট্যাটাস: পরিশোধিত (PAID)
+অর্ডারটি দ্রুততম সময়ে প্রসেসিং করে পাঠানো হবে।
+ধন্যবাদ, Avyzen Imports
+📞 হেল্পলাইন: +8801939846312`;
+
+    case "CANCELLED":
+      return `⚠️ *অর্ডার বাতিল সংক্রান্ত নোটিফিকেশন — AVYZEN IMPORTS*
+আসসালামু আলাইকুম ${order.customer_name},
+আপনার অর্ডার #${order.order_number} অনাকাঙ্ক্ষিত কারণে বাতিল করা হয়েছে।
+
+বিস্তারিত জানতে অনুগ্রহ করে আমাদের হেল্পলাইনে যোগাযোগ করুন:
+📞 হেল্পলাইন: +8801939846312
+ধন্যবাদ, Avyzen Imports`;
+
+    case "GENERAL":
+    default:
+      return `Hello ${order.customer_name}, this is Avyzen Imports regarding your Order #${order.order_number}. Current status: ${order.order_status}.
+How can we assist you today?
+Website: https://avyzenimports.com
+Helpline: +8801939846312`;
+  }
+}
+
+/**
+ * Generate WhatsApp URL directly to the customer's phone with a custom message
+ */
+export function generateAdminToCustomerWhatsAppUrl(phone: string, message: string): string {
+  const formattedPhone = formatWhatsAppPhoneNumber(phone);
+  return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
+}
+

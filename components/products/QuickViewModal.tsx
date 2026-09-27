@@ -14,6 +14,7 @@ import { useCart } from "@/context/cart-context";
 import { useToast } from "@/context/toast-context";
 import { siteConfig } from "@/config/site";
 import { generateDirectProductOrderUrl } from "@/services/whatsapp";
+import { QuickAddressModal, QuickOrderInfo } from "@/components/order/QuickAddressModal";
 
 interface QuickViewModalProps {
   product: Product;
@@ -56,7 +57,9 @@ export function QuickViewModal({ product, open, onClose }: QuickViewModalProps) 
     router.push("/checkout");
   };
 
-  const handleWhatsAppOrder = () => {
+  const [addressModalOpen, setAddressModalOpen] = useState(false);
+
+  const handleWhatsAppConfirm = (info: QuickOrderInfo) => {
     const productUrl = typeof window !== "undefined"
       ? `${window.location.origin}/products/${product.slug}`
       : `${siteConfig.url}/products/${product.slug}`;
@@ -67,8 +70,13 @@ export function QuickViewModal({ product, open, onClose }: QuickViewModalProps) 
       unitPrice: currentPrice,
       totalPrice: currentPrice * quantity,
       productUrl,
+      customerName: info.customerName,
+      customerPhone: info.customerPhone,
+      customerAddress: info.customerAddress,
+      customerCity: info.customerCity,
     });
     window.open(waUrl, "_blank");
+    onClose();
   };
 
   return (
@@ -233,7 +241,7 @@ export function QuickViewModal({ product, open, onClose }: QuickViewModalProps) 
             <Button
               variant="whatsapp"
               className="w-full gap-2"
-              onClick={handleWhatsAppOrder}
+              onClick={() => setAddressModalOpen(true)}
             >
               <MessageCircle className="w-4 h-4 fill-current" />
               <span>Order via WhatsApp</span>
@@ -252,6 +260,16 @@ export function QuickViewModal({ product, open, onClose }: QuickViewModalProps) 
           </div>
         </div>
       </div>
+
+      {/* Mandatory Delivery Address Modal before WhatsApp Order */}
+      <QuickAddressModal
+        open={addressModalOpen}
+        onClose={() => setAddressModalOpen(false)}
+        itemsSummary={`${product.name}${selectedVariant ? ` (${selectedVariant.name})` : ""} × ${quantity}`}
+        subtotal={currentPrice * quantity}
+        freeShippingEligible={currentPrice * quantity >= siteConfig.shipping.freeShippingThreshold}
+        onConfirm={handleWhatsAppConfirm}
+      />
     </Dialog>
   );
 }

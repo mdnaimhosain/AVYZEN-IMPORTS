@@ -102,7 +102,14 @@ export const productAdminSchema = z.object({
   isFeatured: z.boolean().default(false),
   isBestSeller: z.boolean().default(false),
   isNewArrival: z.boolean().default(false),
-  imageUrl: z.string().url("Must be a valid image URL").optional().nullable(),
+  imageUrl: z
+    .string()
+    .refine(
+      (val) => !val || val === "" || val.startsWith("/") || val.startsWith("http://") || val.startsWith("https://"),
+      { message: "Must be a valid web URL (https://...) or local image path (/images/...)" }
+    )
+    .optional()
+    .nullable(),
 });
 
 export type ProductAdminInput = z.infer<typeof productAdminSchema>;

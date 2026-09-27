@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { X, Search, MessageCircle, ExternalLink, ShieldCheck, Package } from "lucide-react";
 import { siteConfig } from "@/config/site";
@@ -34,10 +35,23 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
       <div className="fixed inset-y-0 left-0 w-full max-w-xs bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 shadow-2xl flex flex-col">
         {/* Top Header */}
         <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
-          <Link href="/" onClick={onClose} className="flex items-center gap-2">
-            <span className="font-extrabold text-lg tracking-tight text-zinc-900 dark:text-zinc-50">
-              {siteConfig.name}
-            </span>
+          <Link href="/" onClick={onClose} className="flex items-center gap-2.5">
+            <div className="relative w-9 h-9 rounded-full overflow-hidden shrink-0 border border-zinc-200 dark:border-zinc-700 bg-white">
+              <Image
+                src="/images/logo.png"
+                alt="Avyzen Imports Logo"
+                fill
+                className="object-contain"
+              />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-extrabold text-base tracking-tight text-zinc-900 dark:text-zinc-50 leading-tight">
+                AVYZEN
+              </span>
+              <span className="text-[9px] tracking-widest uppercase font-bold text-blue-600 dark:text-blue-400">
+                Imports
+              </span>
+            </div>
           </Link>
           <button
             onClick={onClose}
@@ -135,14 +149,6 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
             className="flex items-center px-3 py-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
           >
             Contact & Support
-          </Link>
-          <Link
-            href="/admin"
-            onClick={onClose}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            <ShieldCheck className="w-4 h-4 text-zinc-500" />
-            Admin Portal
           </Link>
         </div>
 

@@ -21,9 +21,37 @@ export function HeroBanner() {
               <span>Official 2026 Import Collection</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1]">
-              Engineered For Excellence. Curated For You.
-            </h1>
+            <div className="relative overflow-hidden w-full rounded-2xl bg-gradient-to-r from-amber-500/15 via-rose-500/15 to-emerald-500/15 border border-amber-500/30 p-3.5 sm:p-4 backdrop-blur-md shadow-lg shadow-amber-500/5 group">
+              <h1 className="sr-only">Buy Any Product &amp; Get 36% OFF — Limited Time Only!</h1>
+              {/* Fade gradient on edges for smooth appearance */}
+              <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-14 bg-gradient-to-r from-zinc-950 via-zinc-950/80 to-transparent z-10 pointer-events-none" />
+              <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-14 bg-gradient-to-l from-zinc-950 via-zinc-950/80 to-transparent z-10 pointer-events-none" />
+
+              <div className="flex w-max animate-marquee select-none" aria-hidden="true">
+                {/* Track 1 */}
+                <div className="flex shrink-0 items-center gap-6 pr-6">
+                  <span className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight bg-gradient-to-r from-amber-300 via-rose-400 to-emerald-400 bg-clip-text text-transparent">
+                    🎉 Buy Any Product &amp; Get 36% OFF — Limited Time Only!
+                  </span>
+                  <span className="text-amber-400 text-xl font-bold">✦</span>
+                  <span className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight bg-gradient-to-r from-amber-300 via-rose-400 to-emerald-400 bg-clip-text text-transparent">
+                    🎉 Buy Any Product &amp; Get 36% OFF — Limited Time Only!
+                  </span>
+                  <span className="text-amber-400 text-xl font-bold">✦</span>
+                </div>
+                {/* Track 2 (Identical for seamless infinite loop) */}
+                <div className="flex shrink-0 items-center gap-6 pr-6">
+                  <span className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight bg-gradient-to-r from-amber-300 via-rose-400 to-emerald-400 bg-clip-text text-transparent">
+                    🎉 Buy Any Product &amp; Get 36% OFF — Limited Time Only!
+                  </span>
+                  <span className="text-amber-400 text-xl font-bold">✦</span>
+                  <span className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight bg-gradient-to-r from-amber-300 via-rose-400 to-emerald-400 bg-clip-text text-transparent">
+                    🎉 Buy Any Product &amp; Get 36% OFF — Limited Time Only!
+                  </span>
+                  <span className="text-amber-400 text-xl font-bold">✦</span>
+                </div>
+              </div>
+            </div>
 
             <p className="text-base sm:text-lg text-zinc-400 leading-relaxed max-w-xl">
               Discover authentic audiophile sound, high-speed GaN charging solutions, tactile mechanical keyboards, and handcrafted luxury everyday accessories. Delivered nationwide with Cash on Delivery.

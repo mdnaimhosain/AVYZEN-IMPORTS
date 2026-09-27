@@ -1,5 +1,8 @@
 import React from "react";
+import { cookies } from "next/headers";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminLoginForm } from "@/components/admin/AdminLoginForm";
+import { ADMIN_COOKIE_NAME, verifyAdminSessionToken } from "@/lib/auth/admin";
 
 export const metadata = {
   title: "Admin Operations Portal — Avyzen Imports",
@@ -9,7 +12,15 @@ export const metadata = {
   },
 };
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
+  const isAuthenticated = verifyAdminSessionToken(token);
+
+  if (!isAuthenticated) {
+    return <AdminLoginForm />;
+  }
+
   return (
     <div className="flex min-h-screen bg-zinc-900/10 dark:bg-zinc-950">
       <AdminSidebar />

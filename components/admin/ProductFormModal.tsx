@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/context/toast-context";
 import { slugify } from "@/lib/utils";
+import { Upload, ImageIcon, Loader2 } from "lucide-react";
 
 interface ProductFormModalProps {
   open: boolean;
@@ -28,6 +29,7 @@ export function ProductFormModal({ open, onClose, product, categories, onSaved }
   const [compareAtPrice, setCompareAtPrice] = useState("");
   const [stock, setStock] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [isFeatured, setIsFeatured] = useState(false);
   const [isBestSeller, setIsBestSeller] = useState(false);
   const [isNewArrival, setIsNewArrival] = useState(false);
@@ -62,6 +64,39 @@ export function ProductFormModal({ open, onClose, product, categories, onSaved }
       setIsActive(true);
     }
   }, [product, categories, open]);
+
+  const handleImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      showToast("File size too large. Max 5MB allowed.", "error");
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setImageUrl(data.imageUrl);
+        showToast("Image uploaded successfully!", "success");
+      } else {
+        showToast(data.error || "Failed to upload image", "error");
+      }
+    } catch {
+      showToast("Network error uploading image", "error");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -194,15 +229,56 @@ export function ProductFormModal({ open, onClose, product, categories, onSaved }
             />
           </div>
 
-          <div>
+          <div className="sm:col-span-2">
             <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 block mb-1">
-              Product Image URL
+              Product Image
             </label>
-            <Input
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="https://images.unsplash.com/..."
-            />
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+              {/* Image Preview Thumbnail */}
+              <div className="relative w-16 h-16 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 overflow-hidden shrink-0 flex items-center justify-center">
+                {imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={imageUrl}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <ImageIcon className="w-6 h-6 text-zinc-400" />
+                )}
+              </div>
+
+              {/* Upload & URL Controls */}
+              <div className="flex-1 w-full space-y-2">
+                <div className="flex items-center gap-2">
+                  <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 text-xs font-semibold transition-colors shadow-xs">
+                    {uploadingImage ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Upload className="w-3.5 h-3.5" />
+                    )}
+                    <span>{uploadingImage ? "Uploading..." : "Upload from Device"}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageFileUpload}
+                      disabled={uploadingImage}
+                      className="hidden"
+                    />
+                  </label>
+                  <span className="text-[11px] text-zinc-400">or paste image URL / local path</span>
+                </div>
+
+                <Input
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="https://... or /images/products/example.jpg"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="sm:col-span-2">

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   ShoppingBag,
@@ -83,15 +84,21 @@ export function Header() {
 
           {/* Logo */}
           <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex items-center justify-center font-black text-lg tracking-tighter shadow-sm group-hover:scale-105 transition-transform">
-                A
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 border border-zinc-200 dark:border-zinc-700 bg-white shadow-xs group-hover:scale-105 transition-transform">
+                <Image
+                  src="/images/logo.png"
+                  alt="Avyzen Imports Logo"
+                  fill
+                  priority
+                  className="object-contain"
+                />
               </div>
               <div className="flex flex-col">
-                <span className="font-extrabold text-xl tracking-tight text-zinc-900 dark:text-zinc-50 leading-tight">
+                <span className="font-black text-xl tracking-tight text-zinc-900 dark:text-zinc-50 leading-tight">
                   AVYZEN
                 </span>
-                <span className="text-[10px] tracking-widest uppercase font-semibold text-zinc-400 dark:text-zinc-500">
+                <span className="text-[10px] tracking-widest uppercase font-bold text-blue-600 dark:text-blue-400">
                   Imports
                 </span>
               </div>
@@ -217,15 +224,6 @@ export function Header() {
               <MessageCircle className="w-4 h-4 fill-current" />
               <span>WhatsApp</span>
             </a>
-
-            {/* Admin icon link */}
-            <Link
-              href="/admin"
-              className="p-2.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors hidden xl:flex"
-              title="Admin Portal"
-            >
-              <ShieldCheck className="w-5 h-5" />
-            </Link>
           </div>
         </div>
 

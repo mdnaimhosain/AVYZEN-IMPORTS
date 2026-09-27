@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { addProduct, updateProduct, deleteProduct, getProducts } from "@/lib/db/store";
 import { productAdminSchema } from "@/lib/validations";
+import { ADMIN_COOKIE_NAME, verifyAdminSessionToken } from "@/lib/auth/admin";
+
+async function isAuthorized() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
+  return verifyAdminSessionToken(token);
+}
 
 export async function GET() {
   try {
@@ -14,6 +22,10 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    if (!(await isAuthorized())) {
+      return NextResponse.json({ success: false, error: "Unauthorized access" }, { status: 401 });
+    }
+
     const body = await req.json();
     const validation = productAdminSchema.safeParse(body);
 
@@ -51,6 +63,10 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
+    if (!(await isAuthorized())) {
+      return NextResponse.json({ success: false, error: "Unauthorized access" }, { status: 401 });
+    }
+
     const body = await req.json();
     const { id, ...data } = body;
     if (!id) {
@@ -71,6 +87,10 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    if (!(await isAuthorized())) {
+      return NextResponse.json({ success: false, error: "Unauthorized access" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     if (!id) {
