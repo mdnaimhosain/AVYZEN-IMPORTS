@@ -11,12 +11,14 @@ export const checkoutFormSchema = z.object({
     .trim(),
   phone: z
     .string()
-    .regex(bdPhoneRegex, "Please enter a valid Bangladesh phone number (e.g. 017XXXXXXXX)"),
+    .min(10, "Please enter a valid phone number (at least 10 digits)")
+    .max(20, "Phone number is too long")
+    .trim(),
   email: z
     .string()
     .email("Please enter a valid email address")
-    .trim()
-    .toLowerCase(),
+    .optional()
+    .or(z.literal("")),
   address: z
     .string()
     .min(5, "Please provide complete delivery street address")
@@ -50,8 +52,8 @@ export type CheckoutFormData = z.infer<typeof checkoutFormSchema>;
 
 export const createOrderServerSchema = z.object({
   customerName: z.string().min(2).max(100),
-  customerPhone: z.string().regex(bdPhoneRegex),
-  customerEmail: z.string().email(),
+  customerPhone: z.string().min(10).max(25),
+  customerEmail: z.string().optional().nullable().or(z.literal("")),
   address: z.string().min(5).max(250),
   city: z.string().min(2),
   area: z.string().min(2),

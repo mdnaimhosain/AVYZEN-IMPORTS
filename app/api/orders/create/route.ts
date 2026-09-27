@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     const result = await createOrderSecure({
       customerName: data.customerName,
       customerPhone: data.customerPhone,
-      customerEmail: data.customerEmail,
+      customerEmail: data.customerEmail || "order@avyzenimports.com",
       address: data.address,
       city: data.city,
       area: data.area,

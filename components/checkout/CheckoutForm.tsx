@@ -190,7 +190,7 @@ export function CheckoutForm() {
 
               <div>
                 <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 block mb-1.5">
-                  Email Address *
+                  Email Address (Optional)
                 </label>
                 <Input
                   {...register("email")}

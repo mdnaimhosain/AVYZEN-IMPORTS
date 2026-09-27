@@ -186,7 +186,11 @@ export default function AdminOrdersPage() {
                 orders.map((o) => (
                   <tr
                     key={o.id}
-                    className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40 transition-colors"
+                    onClick={() => {
+                      setSelectedOrder(o);
+                      setModalOpen(true);
+                    }}
+                    className="hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
                   >
                     {/* Order ID & Date */}
                     <td className="py-4 px-6">
@@ -268,7 +272,10 @@ export default function AdminOrdersPage() {
                         {/* 1-Click WhatsApp customer chat */}
                         <button
                           type="button"
-                          onClick={() => handleQuickWhatsApp(o)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleQuickWhatsApp(o);
+                          }}
                           className="p-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 transition-colors"
                           title="Quick WhatsApp message"
                         >
@@ -278,7 +285,10 @@ export default function AdminOrdersPage() {
                         {/* Quick Invoice print */}
                         <button
                           type="button"
-                          onClick={() => setInvoiceOrder(o)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setInvoiceOrder(o);
+                          }}
                           className="p-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 transition-colors"
                           title="Print Invoice"
                         >
