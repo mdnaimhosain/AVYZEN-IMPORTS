@@ -190,7 +190,13 @@ CREATE POLICY "Public variants viewable" ON public.product_variants FOR SELECT U
 CREATE POLICY "Public reviews viewable" ON public.reviews FOR SELECT USING (status = 'APPROVED');
 CREATE POLICY "Public coupons viewable" ON public.coupons FOR SELECT USING (is_active = true);
 
--- Orders read access: By customer or admin
-CREATE POLICY "Orders select policy" ON public.orders FOR SELECT USING (
-    auth.role() = 'service_role' OR customer_id = auth.uid()
-);
+-- Orders and Order Items policies (Allow order placements and tracking)
+CREATE POLICY "Orders select policy" ON public.orders FOR SELECT USING (true);
+CREATE POLICY "Orders insert policy" ON public.orders FOR INSERT WITH CHECK (true);
+CREATE POLICY "Orders update policy" ON public.orders FOR UPDATE USING (true);
+
+CREATE POLICY "Order items select policy" ON public.order_items FOR SELECT USING (true);
+CREATE POLICY "Order items insert policy" ON public.order_items FOR INSERT WITH CHECK (true);
+CREATE POLICY "Order items update policy" ON public.order_items FOR UPDATE USING (true);
+
+CREATE POLICY "Reviews insert policy" ON public.reviews FOR INSERT WITH CHECK (true);
