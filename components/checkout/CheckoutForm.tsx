@@ -126,6 +126,16 @@ export function CheckoutForm() {
       const order = data.order;
       clearCart();
 
+      // Cache order in sessionStorage so confirmation page never 404s even if serverless restarts
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem(`avyzen_order_${order.id}`, JSON.stringify(order));
+          sessionStorage.setItem("avyzen_latest_order", JSON.stringify(order));
+        } catch {
+          // ignore
+        }
+      }
+
       // If online payment with hosted gateway redirect:
       if (data.paymentSession?.paymentUrl) {
         window.location.href = data.paymentSession.paymentUrl;
@@ -139,7 +149,7 @@ export function CheckoutForm() {
         } catch {
           // If popup is blocked by browser, order confirmation page will display direct 1-click button
         }
-        router.push(`/order-confirmation/${order.id}?wa=auto`);
+        router.push(`/order-confirmation/${order.id}`);
       }
     } catch (err) {
       console.error("Submission error:", err);
@@ -499,6 +509,28 @@ export function CheckoutForm() {
                 }
 
                 const fullDeliveryAddress = `${cleanAddress}${cleanArea ? `, ${cleanArea}` : ""}`;
+
+                // Also log order to database so admin sees it in admin panel
+                fetch("/api/orders/create", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    customerName: cleanName,
+                    customerPhone: cleanPhone,
+                    customerEmail: "",
+                    address: cleanAddress,
+                    city: cleanCity,
+                    area: cleanArea || cleanCity,
+                    deliveryNotes: `[Order placed via Direct WhatsApp Checkout]`,
+                    paymentMethod: "COD",
+                    couponCode: couponCode || null,
+                    items: items.map((i) => ({
+                      productId: i.product.id,
+                      variantId: i.variant?.id || null,
+                      quantity: i.quantity,
+                    })),
+                  }),
+                }).catch((err) => console.error("Error logging WhatsApp checkout order:", err));
 
                 const waUrl = generateCartWhatsAppOrderUrl({
                   items: items.map((i) => ({

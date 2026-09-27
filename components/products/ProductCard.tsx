@@ -62,6 +62,30 @@ export function ProductCard({ product }: ProductCardProps) {
       customerAddress: info.customerAddress,
       customerCity: info.customerCity,
     });
+
+    // Synchronize order to database so admin dashboard receives it live
+    fetch("/api/orders/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customerName: info.customerName,
+        customerPhone: info.customerPhone,
+        customerEmail: "",
+        address: info.customerAddress,
+        city: info.customerCity || "Dhaka",
+        area: info.customerCity || "Dhaka",
+        deliveryNotes: `[Order placed via 1-Click WhatsApp on Product Card]`,
+        paymentMethod: "COD",
+        items: [
+          {
+            productId: product.id,
+            variantId: null,
+            quantity: 1,
+          },
+        ],
+      }),
+    }).catch((err) => console.error("Error registering WhatsApp order:", err));
+
     window.open(waUrl, "_blank");
   };
 

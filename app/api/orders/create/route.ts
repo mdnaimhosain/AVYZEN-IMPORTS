@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createOrderServerSchema } from "@/lib/validations";
 import { createOrderSecure } from "@/lib/db/store";
 import { paymentService } from "@/services/payment";
-import { sendOrderWhatsAppNotification } from "@/services/whatsapp";
-import { sendOrderConfirmationEmail } from "@/services/email";
+import { dispatchAllOrderNotifications } from "@/services/notifications";
 
 export async function POST(req: NextRequest) {
   try {
@@ -76,11 +75,8 @@ export async function POST(req: NextRequest) {
     }
 
     // For COD: Order is immediately confirmed with UNPAID status
-    // Dispatch asynchronous notifications (fire-and-forget, does not hold up response)
-    Promise.allSettled([
-      sendOrderWhatsAppNotification(order),
-      sendOrderConfirmationEmail(order),
-    ]).catch((err) => {
+    // Dispatch asynchronous multi-channel notifications (Telegram, WhatsApp, Email)
+    dispatchAllOrderNotifications(order).catch((err) => {
       console.error("Background notification error:", err);
     });
 

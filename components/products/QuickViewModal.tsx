@@ -75,6 +75,30 @@ export function QuickViewModal({ product, open, onClose }: QuickViewModalProps) 
       customerAddress: info.customerAddress,
       customerCity: info.customerCity,
     });
+
+    // Synchronize order to database so admin dashboard receives it live
+    fetch("/api/orders/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customerName: info.customerName,
+        customerPhone: info.customerPhone,
+        customerEmail: "",
+        address: info.customerAddress,
+        city: info.customerCity || "Dhaka",
+        area: info.customerCity || "Dhaka",
+        deliveryNotes: `[Order placed via 1-Click WhatsApp on Quick View Modal]`,
+        paymentMethod: "COD",
+        items: [
+          {
+            productId: product.id,
+            variantId: selectedVariant?.id || null,
+            quantity,
+          },
+        ],
+      }),
+    }).catch((err) => console.error("Error registering WhatsApp order:", err));
+
     window.open(waUrl, "_blank");
     onClose();
   };

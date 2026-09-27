@@ -1,6 +1,7 @@
 import { Category, Product, ProductVariant, Order, OrderItem, Coupon, Payment, Review } from "@/types/database";
 import { generateOrderNumber } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // Initial seed categories
 const initialCategories: Category[] = [
@@ -634,7 +635,7 @@ export async function createOrderSecure(params: CreateOrderParams): Promise<{ su
   }
 
   const grandTotal = Math.max(0, subtotal - discount + shippingFee);
-  const orderId = `ord-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  const orderId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `ord-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   const orderNumber = generateOrderNumber();
 
   // Deduct inventory atomically
@@ -681,16 +682,89 @@ export async function createOrderSecure(params: CreateOrderParams): Promise<{ su
     items: verifiedOrderItems.map((item) => ({ ...item, order_id: orderId })),
   };
 
+  // Add to in-memory store
   store.orders.unshift(newOrder);
+
+  // Persist to Supabase if credentials are provided
+  const supabase = createAdminClient();
+  if (supabase) {
+    try {
+      const { error: orderError } = await supabase.from("orders").insert({
+        id: orderId,
+        order_number: orderNumber,
+        customer_name: newOrder.customer_name,
+        customer_phone: newOrder.customer_phone,
+        customer_email: newOrder.customer_email,
+        address: newOrder.address,
+        city: newOrder.city,
+        area: newOrder.area,
+        postal_code: newOrder.postal_code,
+        delivery_notes: newOrder.delivery_notes,
+        subtotal: newOrder.subtotal,
+        discount: newOrder.discount,
+        shipping_fee: newOrder.shipping_fee,
+        total: newOrder.total,
+        payment_method: newOrder.payment_method,
+        payment_status: newOrder.payment_status,
+        order_status: newOrder.order_status,
+        coupon_code: newOrder.coupon_code,
+        created_at: newOrder.created_at,
+        updated_at: newOrder.updated_at,
+      });
+
+      if (orderError) {
+        console.error("[Supabase createOrderSecure error]:", orderError);
+      } else if (verifiedOrderItems.length > 0) {
+        const itemsToInsert = verifiedOrderItems.map((item) => ({
+          id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `item-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          order_id: orderId,
+          product_id: item.product_id,
+          variant_id: item.variant_id || null,
+          product_name: item.product_name,
+          variant_name: item.variant_name || null,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          total_price: item.total_price,
+          image_url: item.image_url || null,
+        }));
+        const { error: itemsError } = await supabase.from("order_items").insert(itemsToInsert);
+        if (itemsError) {
+          console.error("[Supabase order_items error]:", itemsError);
+        }
+      }
+    } catch (dbErr) {
+      console.error("[Supabase order insert exception]:", dbErr);
+    }
+  }
 
   return { success: true, order: newOrder };
 }
 
 export async function getOrderById(id: string): Promise<Order | null> {
-  const order = store.orders.find((o) => o.id === id);
-  if (!order) return null;
-  const payment = store.payments.find((p) => p.order_id === order.id);
-  return { ...order, payment: payment || null };
+  const order = store.orders.find((o) => o.id === id || o.order_number === id);
+  if (order) {
+    const payment = store.payments.find((p) => p.order_id === order.id);
+    return { ...order, payment: payment || null };
+  }
+
+  const supabase = createAdminClient();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*, items:order_items(*)")
+        .or(`id.eq.${id},order_number.eq.${id}`)
+        .maybeSingle();
+
+      if (!error && data) {
+        return data as Order;
+      }
+    } catch (err) {
+      console.error("[Supabase getOrderById error]:", err);
+    }
+  }
+
+  return null;
 }
 
 export async function getOrderByNumberAndPhone(orderNumber: string, phone: string): Promise<Order | null> {
@@ -705,9 +779,32 @@ export async function getOrderByNumberAndPhone(orderNumber: string, phone: strin
     );
   });
 
-  if (!order) return null;
-  const payment = store.payments.find((p) => p.order_id === order.id);
-  return { ...order, payment: payment || null };
+  if (order) {
+    const payment = store.payments.find((p) => p.order_id === order.id);
+    return { ...order, payment: payment || null };
+  }
+
+  const supabase = createAdminClient();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*, items:order_items(*)")
+        .eq("order_number", cleanOrderNum)
+        .maybeSingle();
+
+      if (!error && data) {
+        const dbPhone = ((data.customer_phone as string) || "").replace(/\D/g, "");
+        if (dbPhone === cleanPhone || dbPhone.endsWith(cleanPhone) || cleanPhone.endsWith(dbPhone)) {
+          return data as Order;
+        }
+      }
+    } catch (err) {
+      console.error("[Supabase getOrderByNumberAndPhone error]:", err);
+    }
+  }
+
+  return null;
 }
 
 export async function updateOrderStatus(
@@ -716,14 +813,40 @@ export async function updateOrderStatus(
   paymentStatus?: Order["payment_status"]
 ): Promise<Order | null> {
   const order = store.orders.find((o) => o.id === orderId);
-  if (!order) return null;
-
-  order.order_status = orderStatus;
-  if (paymentStatus) {
-    order.payment_status = paymentStatus;
+  if (order) {
+    order.order_status = orderStatus;
+    if (paymentStatus) {
+      order.payment_status = paymentStatus;
+    }
+    order.updated_at = new Date().toISOString();
   }
-  order.updated_at = new Date().toISOString();
-  return order;
+
+  const supabase = createAdminClient();
+  if (supabase) {
+    try {
+      const updateData: Record<string, unknown> = {
+        order_status: orderStatus,
+        updated_at: new Date().toISOString(),
+      };
+      if (paymentStatus) {
+        updateData.payment_status = paymentStatus;
+      }
+      const { data, error } = await supabase
+        .from("orders")
+        .update(updateData)
+        .eq("id", orderId)
+        .select("*, items:order_items(*)")
+        .maybeSingle();
+
+      if (!error && data) {
+        return data as Order;
+      }
+    } catch (err) {
+      console.error("[Supabase updateOrderStatus error]:", err);
+    }
+  }
+
+  return order || null;
 }
 
 export async function recordPayment(paymentData: {
@@ -769,6 +892,35 @@ export async function recordPayment(paymentData: {
 }
 
 export async function getAllOrders(filter?: { status?: string; search?: string }): Promise<Order[]> {
+  const supabase = createAdminClient();
+  if (supabase) {
+    try {
+      let query = supabase.from("orders").select("*, items:order_items(*)");
+
+      if (filter?.status && filter.status !== "ALL") {
+        query = query.eq("order_status", filter.status);
+      }
+
+      if (filter?.search) {
+        const q = filter.search.trim();
+        query = query.or(
+          `order_number.ilike.%${q}%,customer_name.ilike.%${q}%,customer_phone.ilike.%${q}%`
+        );
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
+      if (!error && data && data.length > 0) {
+        const dbOrders = data as Order[];
+        // Merge any un-persisted memory orders
+        const dbIds = new Set(dbOrders.map((o) => o.id));
+        const unsynced = store.orders.filter((o) => !dbIds.has(o.id));
+        return [...unsynced, ...dbOrders];
+      }
+    } catch (err) {
+      console.error("[Supabase getAllOrders error]:", err);
+    }
+  }
+
   let list = [...store.orders];
 
   if (filter?.status && filter.status !== "ALL") {
@@ -790,7 +942,7 @@ export async function getAllOrders(filter?: { status?: string; search?: string }
 }
 
 export async function getAdminAnalytics() {
-  const orders = store.orders;
+  const orders = await getAllOrders();
   const totalOrders = orders.length;
   const paidOrders = orders.filter((o) => o.payment_status === "PAID").length;
   const pendingOrders = orders.filter((o) => o.order_status === "PENDING" || o.order_status === "PAYMENT_PENDING").length;
